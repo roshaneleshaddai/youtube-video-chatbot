@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pydantic
+python-multipart
+chromadb
+langchain
+langchain-text-splitters
+langchain-google-genai
+google-generativeai
+numpy
+opencv-python
+yt-dlp
+moviepy
+pydub
+python-dotenv

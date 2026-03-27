@@ -6,7 +6,7 @@ import os
 import hashlib
 from services.pipeline import process_video_to_mat
 from services.rag import index_mat_document
-from services.llm import generate_final_summary, generate_quiz
+from services.llm import generate_final_summary, generate_quiz, generate_title
 
 router = APIRouter(prefix="/api/video", tags=["Video Processing"])
 logger = logging.getLogger(__name__)
@@ -27,6 +27,7 @@ class VideoRequest(BaseModel):
 class VideoResponse(BaseModel):
     message: str
     video_id: str
+    title: str
     summary: str
     quiz: str
 
@@ -85,7 +86,9 @@ async def process_video(request: VideoRequest):
             len(quiz) if quiz else 0,
             time.perf_counter() - stage_start,
         )
-        emit(f"[video] Summary+Quiz generated | video_id={video_id} | elapsed={time.perf_counter() - stage_start:.2f}s")
+        title = generate_title(mat_text)
+        logger.debug("Title generated | video_id=%s | title=%s", video_id, title)
+        emit(f"[video] Summary+Quiz+Title generated | video_id={video_id} | elapsed={time.perf_counter() - stage_start:.2f}s")
 
         logger.info(
             "Video processing success | video_id=%s | total_elapsed=%.2fs",
@@ -97,6 +100,7 @@ async def process_video(request: VideoRequest):
         return VideoResponse(
             message=f"Video processed successfully and indexed into {chunks_indexed} chunks.",
             video_id=video_id,
+            title=title,
             summary=summary,
             quiz=quiz
         )
@@ -110,4 +114,25 @@ async def process_video(request: VideoRequest):
             str(e),
         )
         print(f"[video] Failed | url={request.url} | error={str(e)}", flush=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+class QuizResponse(BaseModel):
+    quiz: str
+
+@router.post("/regenerate-quiz", response_model=QuizResponse)
+async def regenerate_quiz_endpoint(request: VideoRequest):
+    start_time = time.perf_counter()
+    try:
+        video_id = build_video_id(request.url)
+        # Using prefer_cache=True should make this very fast
+        mat_text, _, _ = process_video_to_mat(request.url, video_id=video_id, prefer_cache=True)
+        if not mat_text:
+            raise HTTPException(status_code=400, detail="Failed to load video source for quiz regeneration.")
+        
+        quiz = generate_quiz(mat_text)
+        return QuizResponse(quiz=quiz)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Quiz regeneration failed | url=%s | error=%s", request.url, str(e))
         raise HTTPException(status_code=500, detail=str(e))

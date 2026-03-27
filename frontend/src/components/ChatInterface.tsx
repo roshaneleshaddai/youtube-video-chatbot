@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { Send, Loader } from 'lucide-react';
+import MarkdownRenderer from './MarkdownRenderer';
 
 interface ChatInterfaceProps {
   videoId?: string;
@@ -46,34 +47,36 @@ const ChatInterface = ({ videoId }: ChatInterfaceProps) => {
   };
 
   return (
-    <div className="flex h-[560px] flex-col rounded-2xl border border-slate-700 bg-slate-950/50 p-3 sm:p-4">
-      <div className="pretty-scrollbar flex-1 space-y-3 overflow-y-auto rounded-xl border border-slate-800 bg-slate-900/40 p-3 sm:p-4">
+    <div className="flex h-[560px] flex-col rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm">
+      <div className="pretty-scrollbar flex-1 space-y-3 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50 p-3 sm:p-4">
         {messages.map((msg, i) => (
           <div
             key={`${msg.role}-${i}`}
             className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm ${
               msg.role === 'assistant'
-                ? 'mr-auto border border-indigo-400/20 bg-indigo-500/10 text-slate-100'
-                : 'ml-auto border border-slate-600 bg-slate-800 text-slate-100'
+                ? 'mr-auto border border-slate-200 bg-white'
+                : 'ml-auto bg-gradient-to-r from-indigo-500 to-violet-500 text-white'
             }`}
           >
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">
+            <p className={`text-xs font-semibold uppercase tracking-wide ${msg.role === 'assistant' ? 'text-slate-500' : 'text-indigo-100'}`}>
               {msg.role === 'assistant' ? 'Assistant' : 'You'}
             </p>
-            <p className="mt-1 whitespace-pre-wrap text-sm leading-6">{msg.content}</p>
+            <div className={`mt-1 ${msg.role === 'assistant' ? 'text-slate-800' : 'text-white'}`}>
+              {msg.role === 'assistant' ? <MarkdownRenderer content={msg.content} /> : <p className="whitespace-pre-wrap text-sm leading-6">{msg.content}</p>}
+            </div>
           </div>
         ))}
         {loading && (
-          <div className="mr-auto inline-flex items-center gap-2 rounded-xl border border-indigo-400/20 bg-indigo-500/10 px-3 py-2 text-sm text-slate-200">
-            <Loader size={14} className="animate-spin" /> Thinking...
+          <div className="mr-auto inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500 shadow-sm">
+            <Loader size={14} className="animate-spin text-indigo-500" /> Thinking...
           </div>
         )}
       </div>
 
-      <div className="mt-3 flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/80 p-2">
+      <div className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-400">
         <input
           type="text"
-          className="w-full bg-transparent px-2 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none"
+          className="w-full bg-transparent px-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
           placeholder="Ask a question..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -85,7 +88,7 @@ const ChatInterface = ({ videoId }: ChatInterfaceProps) => {
           }}
         />
         <button
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 px-4 py-2 text-sm font-medium text-white transition hover:from-indigo-400 hover:to-violet-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 px-4 py-2 text-sm font-medium text-white transition hover:from-indigo-600 hover:to-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
           onClick={() => void sendMessage()}
           disabled={loading || !videoId}
         >

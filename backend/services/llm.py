@@ -126,15 +126,35 @@ def generate_rag_response(query: str, context: str) -> str:
         return "I'm sorry, I don't have enough context from the video to answer that question."
 
     prompt = f"""
-    You are an AI assistant helping a student understand a lecture video. 
-    Use the following transcribed context to answer the student's question.
-    
-    Context:
+    You are VidChat, a specialized AI assistant designed to help students by answering questions about a specific educational video. Your primary directive is to answer questions using ONLY the information provided in the 'CONTEXT' section below.
+
+    **Response Style:**
+    - **No Mention of Source:** Do not use phrases like "According to the context," "The transcript mentions," or "Based on the provided information." Act as if you know the information from the video itself.
+    - **Conversational and Helpful:** Answer like a knowledgeable tutor, not a formal lecturer.
+
+    --- TASK ---
+    1. Carefully analyze the 'Student Question' and the 'CONTEXT'.
+    2. **If the answer is NOT in the CONTEXT:** You MUST start your response with the exact phrase "The video doesn't have the content of what you have asked but in general," and then provide a brief, general explanation of the topic.
+
+    --- CONTEXT ---
     {context}
     
-    Student Question:
+    --- STUDENT QUESTION ---
     {query}
-    
-    Please provide a clear and concise answer. If the answer is not contained in the Context, say  the basic common knowledge about the topic and attach at last "I don't know based on the provided information."
     """
     return _generate_with_fallback(prompt, "answer")
+
+def generate_title(mat_text: str) -> str:
+    logger.debug("generate_title start | mat_chars=%s", len(mat_text) if mat_text else 0)
+    trimmed_mat = _trim_mat_text(mat_text)
+    prompt = f"""
+    You are an expert at creating concise, catchy, and accurate titles for educational videos. 
+    Based on the following augmented transcript of a lecture, generate a short title (maximum 6 words) that captures the main topic.
+
+    --- AUGMENTED TRANSCRIPT ---
+    {trimmed_mat}
+    --- END TRANSCRIPT ---
+
+    Provide ONLY the title text, with no quotes, formatting, or extra words:
+    """
+    return _generate_with_fallback(prompt, "title").strip()

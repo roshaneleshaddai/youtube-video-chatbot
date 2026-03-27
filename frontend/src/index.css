@@ -1,13 +1,13 @@
 /* Modern Premium Styling - Vanilla CSS */
 :root {
-  --bg-dark: #0f172a;
-  --bg-card: #1e293b;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
+  --bg-dark: #ffffff;
+  --bg-card: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
   --accent-color: #3b82f6;
   --accent-hover: #2563eb;
   --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-subtle: rgba(0, 0, 0, 0.1);
   --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.2);
 }
 
@@ -19,8 +19,8 @@
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--bg-dark);
-  color: var(--text-primary);
+  background-color: #ffffff;
+  color: #0f172a;
   line-height: 1.6;
   min-height: 100vh;
 }

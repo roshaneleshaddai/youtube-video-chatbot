@@ -27,6 +27,7 @@ class VideoRequest(BaseModel):
 class VideoResponse(BaseModel):
     message: str
     video_id: str
+    mat_text: str
     title: str
     summary: str
     quiz: str
@@ -100,6 +101,7 @@ async def process_video(request: VideoRequest):
         return VideoResponse(
             message=f"Video processed successfully and indexed into {chunks_indexed} chunks.",
             video_id=video_id,
+            mat_text=mat_text,
             title=title,
             summary=summary,
             quiz=quiz

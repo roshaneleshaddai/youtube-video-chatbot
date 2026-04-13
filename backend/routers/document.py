@@ -61,5 +61,9 @@ async def process_document(file: UploadFile = File(...)):
         logger.warning("[document] Validation error | filename=%s | error=%s", file.filename, str(exc))
         raise HTTPException(status_code=400, detail=str(exc))
     except Exception as exc:
+        error_text = str(exc)
+        if "RESOURCE_EXHAUSTED" in error_text or "429" in error_text:
+            logger.warning("[document] Quota/rate limit hit | filename=%s | error=%s", file.filename, error_text)
+            raise HTTPException(status_code=429, detail=error_text)
         logger.exception("[document] Processing failed | filename=%s | error=%s", file.filename, str(exc))
         raise HTTPException(status_code=500, detail=str(exc))

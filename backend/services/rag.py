@@ -4,6 +4,8 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import logging
 from typing import Iterable
+import time
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +16,28 @@ chroma_client = chromadb.PersistentClient(path=DB_DIR)
 
 collection_name = "mat_collection"
 DEFAULT_EMBEDDING_MODEL = os.getenv("GOOGLE_EMBEDDING_MODEL", "models/gemini-embedding-001")
+EMBED_BATCH_SIZE = int(os.getenv("EMBED_BATCH_SIZE", "96"))
+MAX_EMBED_RETRY_ATTEMPTS = int(os.getenv("MAX_EMBED_RETRY_ATTEMPTS", "2"))
+
+
+def _is_quota_error(exc: Exception) -> bool:
+    message = str(exc)
+    return "RESOURCE_EXHAUSTED" in message or "429" in message
+
+
+def _extract_retry_after_seconds(exc: Exception) -> int:
+    """Extracts retry delay from Gemini error text; defaults to 60 seconds."""
+    message = str(exc)
+    # Matches strings such as "retry in 57.670118848s" or "retryDelay': '57s'".
+    patterns = [r"retry in\s+([0-9]+(?:\.[0-9]+)?)s", r"retryDelay['\"]?:\s*['\"]?([0-9]+)s"]
+    for pattern in patterns:
+        match = re.search(pattern, message, flags=re.IGNORECASE)
+        if match:
+            try:
+                return max(int(float(match.group(1))), 1)
+            except Exception:
+                pass
+    return 60
 
 
 def _model_candidates() -> list[str]:
@@ -36,7 +60,30 @@ def _embed_documents_with_fallback(chunks: list[str]) -> tuple[list[list[float]]
         try:
             logger.debug("Embedding documents | model=%s | chunk_count=%s", model_name, len(chunks))
             embeddings = GoogleGenerativeAIEmbeddings(model=model_name)
-            return embeddings.embed_documents(chunks), model_name
+            embedded_docs: list[list[float]] = []
+            step = max(EMBED_BATCH_SIZE, 1)
+            for start in range(0, len(chunks), step):
+                batch = chunks[start:start + step]
+                attempts = 0
+                while True:
+                    try:
+                        embedded_docs.extend(embeddings.embed_documents(batch))
+                        break
+                    except Exception as exc:
+                        attempts += 1
+                        if _is_quota_error(exc) and attempts <= MAX_EMBED_RETRY_ATTEMPTS:
+                            retry_after = _extract_retry_after_seconds(exc)
+                            logger.warning(
+                                "Embedding quota hit; waiting before retry | model=%s | batch_start=%s | retry_after=%ss | attempt=%s",
+                                model_name,
+                                start,
+                                retry_after,
+                                attempts,
+                            )
+                            time.sleep(retry_after)
+                            continue
+                        raise
+            return embedded_docs, model_name
         except Exception as exc:
             errors.append(f"{model_name}: {exc}")
             if _is_model_not_found_error(exc):

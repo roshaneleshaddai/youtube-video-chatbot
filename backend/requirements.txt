@@ -13,3 +13,5 @@ yt-dlp
 moviepy
 pydub
 python-dotenv
+openai-whisper
+pypdf

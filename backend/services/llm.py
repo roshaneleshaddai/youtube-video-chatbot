@@ -103,7 +103,8 @@ def generate_quiz(mat_text: str) -> str:
     3.  The questions must be directly answerable from the provided transcript.
     4.  Do not ask questions about the speaker or presenter. Focus only on the subject matter.
     5.  Ensure all options for a question are unique.
-    6.  the question should not talk about transcript.
+    6.  The question should not talk about the transcript.
+    7.  Include a brief explanation for the correct answer so the app can show it after a wrong attempt.
 
     Format each question exactly as follows:
     1. Question?
@@ -112,8 +113,9 @@ def generate_quiz(mat_text: str) -> str:
        c) Option 3
        d) Option 4
     Answer: a
+     Explanation: reason why option a is correct and it should not mention about the transcript .
 
-    Note: For the answer, provide ONLY the letter (a, b, c, or d) without any additional text. Use a newline after the answer.
+     Note: For the answer, provide ONLY the letter (a, b, c, or d) without any additional text. Use a newline after the answer. Keep the explanation concise and directly tied to the correct option.
 
     Begin the quiz now:
     """
@@ -123,18 +125,18 @@ def generate_rag_response(query: str, context: str) -> str:
     """Generates an answer to the query using the retrieved context."""
     logger.debug("generate_rag_response start | query_len=%s | context_chars=%s", len(query), len(context) if context else 0)
     if not context:
-        return "I'm sorry, I don't have enough context from the video to answer that question."
+        return "I'm sorry, I don't have enough context from the analyzed content to answer that question."
 
     prompt = f"""
-    You are VidChat, a specialized AI assistant designed to help students by answering questions about a specific educational video. Your primary directive is to answer questions using ONLY the information provided in the 'CONTEXT' section below.
+    You are VidChat, a specialized AI assistant designed to help students by answering questions about analyzed educational content (video or document). Your primary directive is to answer questions using ONLY the information provided in the 'CONTEXT' section below.
 
     **Response Style:**
-    - **No Mention of Source:** Do not use phrases like "According to the context," "The transcript mentions," or "Based on the provided information." Act as if you know the information from the video itself.
+    - **No Mention of Source:** Do not use phrases like "According to the context," "The transcript mentions," or "Based on the provided information." Act as if you know the information directly.
     - **Conversational and Helpful:** Answer like a knowledgeable tutor, not a formal lecturer.
 
     --- TASK ---
     1. Carefully analyze the 'Student Question' and the 'CONTEXT'.
-    2. **If the answer is NOT in the CONTEXT:** You MUST start your response with the exact phrase "The video doesn't have the content of what you have asked but in general," and then provide a brief, general explanation of the topic.
+    2. **If the answer is NOT in the CONTEXT:** You MUST start your response with the exact phrase "The video doesn't have the content of what you have asked but in general," and then provide a brief, general explanation of the topic and search for the youtube videos related to the topic and give them as suggestions.
 
     --- CONTEXT ---
     {context}

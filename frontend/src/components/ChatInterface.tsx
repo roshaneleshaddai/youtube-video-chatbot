@@ -18,7 +18,7 @@ interface ChatResponse {
 
 const ChatInterface = ({ videoId }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'assistant', content: 'Hello! Ask me anything about the video.' },
+    { role: 'assistant', content: 'Hello! Ask me anything about the analyzed content.' },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);

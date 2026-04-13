@@ -1,0 +1,161 @@
+{
+  "evaluation_summary": {
+    "total_tests": 3,
+    "timestamp": "2026-03-27T17:24:07.730242",
+    "mode": "DEMO - Mock Scores",
+    "criteria": [
+      "clarity",
+      "unambiguity",
+      "relevance",
+      "completeness",
+      "coherence"
+    ],
+    "note": "Free tier quota exceeded - showing how evaluation works with realistic mock data"
+  },
+  "test_results": [
+    {
+      "query": "What is machine learning?",
+      "response": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It uses algorithms to analyze data, identify patterns, and make decisions based on those patterns.",
+      "scores": {
+        "clarity": {
+          "score": 3.3,
+          "reasoning": "Response is reasonably clear"
+        },
+        "unambiguity": {
+          "score": 3.5,
+          "reasoning": "Response is mostly clear with minor ambiguities"
+        },
+        "relevance": {
+          "score": 4.7,
+          "reasoning": "Response is highly relevant to the query"
+        },
+        "completeness": {
+          "score": 3.8,
+          "reasoning": "Response addresses key points"
+        },
+        "coherence": {
+          "score": 3.3,
+          "reasoning": "Response is mostly coherent"
+        }
+      },
+      "overall_score": 3.72,
+      "max_score": 4.7,
+      "min_score": 3.3,
+      "api_calls_used": 0,
+      "mode": "DEMO",
+      "metadata": {
+        "evaluation_time": "2026-03-27T17:24:07.731242",
+        "note": "Mock scores for demonstration (API quota exceeded)",
+        "num_criteria": 5
+      }
+    },
+    {
+      "query": "How do neural networks work?",
+      "response": "Neural networks are computational systems inspired by biological neural networks. They consist of interconnected nodes (neurons) organized in layers. Data flows through these layers, with each connection having adjustable weights that are updated during training to minimize prediction errors.",
+      "scores": {
+        "clarity": {
+          "score": 4.9,
+          "reasoning": "Response is very clear and easy to understand"
+        },
+        "unambiguity": {
+          "score": 4.7,
+          "reasoning": "Response is precise and unambiguous"
+        },
+        "relevance": {
+          "score": 4.9,
+          "reasoning": "Response is highly relevant to the query"
+        },
+        "completeness": {
+          "score": 3.8,
+          "reasoning": "Response addresses key points"
+        },
+        "coherence": {
+          "score": 5.0,
+          "reasoning": "Response is well-structured and logical"
+        }
+      },
+      "overall_score": 4.66,
+      "max_score": 5.0,
+      "min_score": 3.8,
+      "api_calls_used": 0,
+      "mode": "DEMO",
+      "metadata": {
+        "evaluation_time": "2026-03-27T17:24:07.731242",
+        "note": "Mock scores for demonstration (API quota exceeded)",
+        "num_criteria": 5
+      }
+    },
+    {
+      "query": "What is the difference between supervised and unsupervised learning?",
+      "response": "Supervised learning trains on labeled data where the correct answers are known, helping the model learn the relationship between inputs and outputs. Unsupervised learning finds patterns in unlabeled data without predefined targets. Supervised is better for specific prediction tasks, while unsupervised excels at exploration and pattern discovery.",
+      "scores": {
+        "clarity": {
+          "score": 3.5,
+          "reasoning": "Response is reasonably clear"
+        },
+        "unambiguity": {
+          "score": 3.5,
+          "reasoning": "Response is mostly clear with minor ambiguities"
+        },
+        "relevance": {
+          "score": 4.7,
+          "reasoning": "Response is highly relevant to the query"
+        },
+        "completeness": {
+          "score": 3.8,
+          "reasoning": "Response addresses key points"
+        },
+        "coherence": {
+          "score": 3.4,
+          "reasoning": "Response is mostly coherent"
+        }
+      },
+      "overall_score": 3.78,
+      "max_score": 4.7,
+      "min_score": 3.4,
+      "api_calls_used": 0,
+      "mode": "DEMO",
+      "metadata": {
+        "evaluation_time": "2026-03-27T17:24:07.732259",
+        "note": "Mock scores for demonstration (API quota exceeded)",
+        "num_criteria": 5
+      }
+    }
+  ],
+  "statistics": {
+    "overall": {
+      "mean": 4.05,
+      "median": 3.78,
+      "stdev": 0.53,
+      "min": 3.72,
+      "max": 4.66
+    },
+    "by_criterion": {
+      "clarity": {
+        "mean": 3.9,
+        "median": 3.5,
+        "stdev": 0.87
+      },
+      "unambiguity": {
+        "mean": 3.9,
+        "median": 3.5,
+        "stdev": 0.69
+      },
+      "relevance": {
+        "mean": 4.77,
+        "median": 4.7,
+        "stdev": 0.12
+      },
+      "completeness": {
+        "mean": 3.8,
+        "median": 3.8,
+        "stdev": 0.0
+      },
+      "coherence": {
+        "mean": 3.9,
+        "median": 3.4,
+        "stdev": 0.95
+      }
+    }
+  }
+}

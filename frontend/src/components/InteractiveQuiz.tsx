@@ -13,12 +13,14 @@ interface ParsedQuestion {
   question: string;
   options: { id: string; text: string }[];
   answer: string;
+  explanation?: string;
 }
 
 function parseQuiz(text: string): ParsedQuestion[] {
   const questions: ParsedQuestion[] = [];
   const lines = text.split('\n');
   let currentQuestion: Partial<ParsedQuestion> | null = null;
+  let lastQuestionWasParsed = false;
   
   for (let i = 0; i < lines.length; i++) {
     const origLine = lines[i];
@@ -29,6 +31,7 @@ function parseQuiz(text: string): ParsedQuestion[] {
     if (qMatch) {
       if (currentQuestion && currentQuestion.question && currentQuestion.options?.length && currentQuestion.answer) {
         questions.push(currentQuestion as ParsedQuestion);
+        lastQuestionWasParsed = true;
       }
       currentQuestion = {
         id: parseInt(qMatch[1], 10),
@@ -36,20 +39,28 @@ function parseQuiz(text: string): ParsedQuestion[] {
         options: [],
         answer: ''
       };
+      lastQuestionWasParsed = false;
       continue;
     }
     
     const optionMatch = trimmed.match(/^([a-d])[.)]\s*(.+)/i);
-    const isAnswerLine = trimmed.match(/^(?:Correct\s+)?Answer.*?([a-d])/i);
+    const isAnswerLine = trimmed.match(/^(?:Correct\s+)?Answer\s*:?\s*([a-d])/i);
+    const explanationMatch = trimmed.match(/^Explanation\s*:?\s*(.+)/i);
     
     if (isAnswerLine && currentQuestion) {
       currentQuestion.answer = isAnswerLine[1].toLowerCase();
+      lastQuestionWasParsed = false;
+      continue;
+    } else if (explanationMatch && currentQuestion) {
+      currentQuestion.explanation = explanationMatch[1].trim();
+      lastQuestionWasParsed = false;
       continue;
     } else if (optionMatch && currentQuestion) {
       currentQuestion.options!.push({
         id: optionMatch[1].toLowerCase(),
         text: optionMatch[2].trim(),
       });
+      lastQuestionWasParsed = false;
       continue;
     }
     
@@ -57,6 +68,12 @@ function parseQuiz(text: string): ParsedQuestion[] {
       if (!trimmed.toLowerCase().includes("begin the quiz")) {
         currentQuestion.question += ' ' + trimmed;
       }
+      lastQuestionWasParsed = false;
+      continue;
+    }
+
+    if (currentQuestion && currentQuestion.answer && !currentQuestion.explanation && lastQuestionWasParsed === false) {
+      currentQuestion.explanation = trimmed;
     }
   }
   
@@ -147,6 +164,8 @@ const InteractiveQuiz = ({ quizText, onRegenerate, isRegenerating }: Interactive
       
       <div className="space-y-8">
         {questions.map((q, idx) => {
+          const isSelected = selectedAnswers[idx];
+          const isAnsweredWrong = isSubmitted && isSelected && isSelected !== q.answer;
           return (
             <div key={idx} className="bg-slate-50 p-5 rounded-xl border border-slate-100">
               <h3 className="text-[15px] font-medium text-slate-800 mb-4 flex gap-2">
@@ -155,7 +174,7 @@ const InteractiveQuiz = ({ quizText, onRegenerate, isRegenerating }: Interactive
               </h3>
               <div className="space-y-2">
                 {q.options.map((opt) => {
-                  const isSelected = selectedAnswers[idx] === opt.id;
+                  const optionIsSelected = selectedAnswers[idx] === opt.id;
                   const isActuallyCorrect = q.answer === opt.id;
                   
                   let optionClass = "flex items-center w-full text-left p-3 rounded-lg border text-sm transition-colors ";
@@ -163,13 +182,13 @@ const InteractiveQuiz = ({ quizText, onRegenerate, isRegenerating }: Interactive
                   if (isSubmitted) {
                     if (isActuallyCorrect) {
                       optionClass += "bg-emerald-50 border-emerald-200 text-emerald-800 font-medium";
-                    } else if (isSelected && !isActuallyCorrect) {
+                    } else if (optionIsSelected && !isActuallyCorrect) {
                       optionClass += "bg-red-50 border-red-200 text-red-800";
                     } else {
                       optionClass += "bg-white border-slate-200 text-slate-500 opacity-60";
                     }
                   } else {
-                    if (isSelected) {
+                    if (optionIsSelected) {
                       optionClass += "bg-indigo-50 border-indigo-300 text-indigo-800 cursor-pointer shadow-sm";
                     } else {
                       optionClass += "bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-slate-50 cursor-pointer";
@@ -191,13 +210,20 @@ const InteractiveQuiz = ({ quizText, onRegenerate, isRegenerating }: Interactive
                       {isSubmitted && isActuallyCorrect && (
                         <CheckCircle2 size={18} className="ml-auto text-emerald-500 shrink-0" />
                       )}
-                      {isSubmitted && isSelected && !isActuallyCorrect && (
+                      {isSubmitted && optionIsSelected && !isActuallyCorrect && (
                         <XCircle size={18} className="ml-auto text-red-500 shrink-0" />
                       )}
                     </button>
                   );
                 })}
               </div>
+
+              {isAnsweredWrong && q.explanation && (
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  <div className="font-semibold">Explanation</div>
+                  <p className="mt-1 leading-6">{q.explanation}</p>
+                </div>
+              )}
             </div>
           );
         })}

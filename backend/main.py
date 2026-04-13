@@ -64,10 +64,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from routers import video, chat
+from routers import video, chat, document
 
 app.include_router(video.router)
 app.include_router(chat.router)
+app.include_router(document.router)
 
 logger.info(
     "FastAPI app initialized with log level=%s | third_party_log_level=%s | log_file=%s | google_api_key_set=%s",

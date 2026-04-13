@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import axios from 'axios';
-import { Youtube, MessageSquare, FileText, HelpCircle, Loader, History } from 'lucide-react';
+import { Youtube, MessageSquare, FileText, HelpCircle, Loader, History, FileUp } from 'lucide-react';
 
 import ChatInterface from './components/ChatInterface';
 import GeneratedSummary from './components/GeneratedSummary';
 import InteractiveQuiz from './components/InteractiveQuiz';
 
 type ActiveTab = 'chat' | 'summary' | 'quiz';
+type SourceTab = 'video' | 'document';
 
 interface VideoData {
   summary?: string;
@@ -17,12 +18,15 @@ interface VideoData {
 }
 
 interface HistoryItem {
-  url: string;
+  sourceType: SourceTab;
+  sourceValue: string;
   data: VideoData;
 }
 
 function App() {
+  const [sourceTab, setSourceTab] = useState<SourceTab>('video');
   const [videoUrl, setVideoUrl] = useState('');
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [videoData, setVideoData] = useState<VideoData | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>('chat');
@@ -31,34 +35,53 @@ function App() {
 
   const handleProcessVideo = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!videoUrl) return;
+    if (sourceTab === 'video' && !videoUrl) return;
+    if (sourceTab === 'document' && !documentFile) return;
 
     setLoading(true);
 
     try {
-      const response = await axios.post<VideoData>('http://localhost:8000/api/video/process', {
-        url: videoUrl,
-      });
-      const data = response.data;
+      let data: VideoData;
+
+      if (sourceTab === 'video') {
+        const response = await axios.post<VideoData>('http://localhost:8000/api/video/process', {
+          url: videoUrl,
+        });
+        data = response.data;
+      } else {
+        const formData = new FormData();
+        formData.append('file', documentFile as File);
+        const response = await axios.post<VideoData>('http://localhost:8000/api/document/process', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        data = response.data;
+      }
+
       setVideoData(data);
       setActiveTab('summary');
       
       setHistory(prev => {
-        const exists = prev.find(h => h.data.video_id === data.video_id);
+        const sourceValue = sourceTab === 'video' ? videoUrl : (documentFile?.name || 'Document');
+        const exists = prev.find(
+          h => h.data.video_id === data.video_id && h.sourceType === sourceTab && h.sourceValue === sourceValue,
+        );
         if (exists) return prev;
-        return [{ url: videoUrl, data }, ...prev];
+        return [{ sourceType: sourceTab, sourceValue, data }, ...prev];
       });
       
     } catch (error) {
-      console.error('Error processing video:', error);
-      alert('Failed to process the video. Make sure the backend is running.');
+      console.error('Error processing source:', error);
+      const message = axios.isAxiosError(error)
+        ? (error.response?.data?.detail || error.message)
+        : 'Unknown error';
+      alert(`Failed to process content: ${message}`);
     } finally {
       setLoading(false);
     }
   };
 
   const handleRegenerateQuiz = async () => {
-    if (!videoUrl || !videoData) return;
+    if (sourceTab !== 'video' || !videoUrl || !videoData) return;
     setIsRegeneratingQuiz(true);
     try {
       const response = await axios.post<{quiz: string}>('http://localhost:8000/api/video/regenerate-quiz', {
@@ -80,7 +103,14 @@ function App() {
   };
 
   const loadFromHistory = (item: HistoryItem) => {
-    setVideoUrl(item.url);
+    setSourceTab(item.sourceType);
+    if (item.sourceType === 'video') {
+      setVideoUrl(item.sourceValue);
+      setDocumentFile(null);
+    } else {
+      setVideoUrl('');
+      setDocumentFile(null);
+    }
     setVideoData(item.data);
     setActiveTab('summary');
   };
@@ -108,27 +138,72 @@ function App() {
               onSubmit={handleProcessVideo}
               className="mb-8 flex w-full max-w-3xl flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-md sm:flex-row sm:items-center sm:gap-4"
             >
-              <div className="flex flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-400/50 transition">
-                <Youtube className="text-red-500" size={18} />
-                <input
-                  type="text"
-                  className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
-                  placeholder="Paste YouTube URL here..."
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                />
+              <div className="flex flex-1 flex-col gap-3">
+                <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSourceTab('video')}
+                    className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                      sourceTab === 'video'
+                        ? 'bg-white text-indigo-700 shadow-sm border border-indigo-200'
+                        : 'text-slate-600 hover:bg-white/60'
+                    }`}
+                  >
+                    <Youtube size={16} className="text-red-500" /> Video
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSourceTab('document')}
+                    className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                      sourceTab === 'document'
+                        ? 'bg-white text-indigo-700 shadow-sm border border-indigo-200'
+                        : 'text-slate-600 hover:bg-white/60'
+                    }`}
+                  >
+                    <FileUp size={16} className="text-indigo-500" /> Document
+                  </button>
+                </div>
+
+                {sourceTab === 'video' ? (
+                  <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-400/50 transition">
+                    <Youtube className="text-red-500" size={18} />
+                    <input
+                      type="text"
+                      className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                      placeholder="Paste YouTube URL here..."
+                      value={videoUrl}
+                      onChange={(e) => setVideoUrl(e.target.value)}
+                    />
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition">
+                    <FileUp className="text-indigo-500" size={18} />
+                    <span className="truncate">
+                      {documentFile ? documentFile.name : 'Upload a document (txt, md, csv, json, log, code files, pdf)'}
+                    </span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".txt,.md,.csv,.json,.log,.py,.js,.ts,.pdf"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setDocumentFile(file);
+                      }}
+                    />
+                  </label>
+                )}
               </div>
               <button
                 type="submit"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3 text-sm font-semibold text-white shadow hover:from-indigo-500 hover:to-violet-500 disabled:cursor-not-allowed disabled:opacity-50 transition min-w-[150px]"
-                disabled={loading || !videoUrl}
+                disabled={loading || (sourceTab === 'video' ? !videoUrl : !documentFile)}
               >
                 {loading ? (
                   <>
                     <Loader size={18} className="animate-spin" /> Processing...
                   </>
                 ) : (
-                  'Analyze Video'
+                  sourceTab === 'video' ? 'Analyze Video' : 'Analyze Document'
                 )}
               </button>
             </form>
@@ -175,8 +250,8 @@ function App() {
                   <div className={activeTab === 'quiz' ? 'block' : 'hidden'}>
                     <InteractiveQuiz 
                       quizText={videoData.quiz} 
-                      onRegenerate={handleRegenerateQuiz}
-                      isRegenerating={isRegeneratingQuiz}
+                      onRegenerate={sourceTab === 'video' ? handleRegenerateQuiz : undefined}
+                      isRegenerating={sourceTab === 'video' ? isRegeneratingQuiz : false}
                     />
                   </div>
                   <div className={activeTab === 'chat' ? 'block' : 'hidden'}>
@@ -193,8 +268,8 @@ function App() {
                 </div>
                 <h3 className="mb-2 text-xl font-semibold text-slate-800">Ready to Learn?</h3>
                 <p className="mx-auto max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
-                  Paste a YouTube URL above. The system will extract audio and visual frames, synthesize a
-                  Multimodal-Augmented Transcript, generate your study materials, and prepare the RAG chatbot!
+                  Choose Video to analyze YouTube content or Document to upload study material. The system will
+                  generate a summary, quiz, and prepare the RAG chatbot for follow-up questions.
                 </p>
               </div>
             )}
@@ -208,7 +283,7 @@ function App() {
               </h3>
               {history.length === 0 ? (
                 <p className="text-sm text-slate-500 py-4 text-center border border-dashed border-slate-300 rounded-lg">
-                  No processed videos yet.
+                  No processed content yet.
                 </p>
               ) : (
                 <ul className="space-y-2 max-h-[600px] overflow-y-auto pretty-scrollbar pr-2">
@@ -225,11 +300,15 @@ function App() {
                           }`}
                         >
                           <div className="font-medium truncate mb-1 flex items-center gap-1.5" title={item.data.title}>
-                            <Youtube size={14} className={isActive ? "text-indigo-500 shrink-0" : "text-slate-400 shrink-0"} />
+                            {item.sourceType === 'video' ? (
+                              <Youtube size={14} className={isActive ? "text-indigo-500 shrink-0" : "text-slate-400 shrink-0"} />
+                            ) : (
+                              <FileUp size={14} className={isActive ? "text-indigo-500 shrink-0" : "text-slate-400 shrink-0"} />
+                            )}
                             {item.data.title || `Video ${item.data.video_id?.slice(0, 8)}`}
                           </div>
                           <div className="text-xs text-slate-400 truncate pl-5">
-                            {item.url}
+                            {item.sourceType === 'video' ? item.sourceValue : `Document: ${item.sourceValue}`}
                           </div>
                         </button>
                       </li>

@@ -89,25 +89,7 @@ The system follows a modular pipeline:
 - Multimodal Processing
 - Retrieval-Augmented Generation (RAG)
 - Embeddings (semantic search)
-
----
-
-## 📂 Project Structure (High-Level)
-├── backend/
-│ ├── api/
-│ ├── services/
-│ ├── rag/
-│ └── models/
-│
-├── frontend/
-│ ├── components/
-│ ├── pages/
-│ └── utils/
-│
-├── data/
-├── notebooks/
-└── README.md
-
+  
 ---
 
 ## ⚙️ How It Works

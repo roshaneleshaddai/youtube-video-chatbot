@@ -13,7 +13,7 @@ VidChat is an AI-powered multimodal learning system that transforms passive vide
   https://colab.research.google.com/drive/1kDgSk1Wo3FpFzQrnuVaC8pGrNvbtpR6C?usp=sharing  
 
 - 📊 **Final Presentation:**  
-  https://1drv.ms/p/c/411c9b1b4b7e0494/IQCQKmK_76GwRrgeEVH1QKK2AeCyZK9HzTiapgJDnUQBnnM?e=gcE6fb  
+  https://1drv.ms/p/c/411c9b1b4b7e0494/IQCdt_j4giiQRrYZ9qnFCvrsAdOhRomURWlku6ZpdZN9KIY?e=1lLo6h
 
 ---
 
